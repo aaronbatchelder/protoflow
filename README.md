@@ -65,7 +65,7 @@ sudo apt install git
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/protoflow.git
+git clone https://github.com/aaronbatchelder/protoflow.git
 cd protoflow
 
 # Make it executable
