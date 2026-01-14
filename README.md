@@ -15,82 +15,76 @@ When building a feature, there's often multiple valid approaches:
 
 Instead of wasting time deciding, **prototype them all**. Let multiple concurrent agents build each approach simultaneously, then compare real working code and experiences.
 
+## Quick Start
+
+```bash
+# 1. Install (one-time)
+git clone https://github.com/aaronbatchelder/protoflow.git
+sudo ln -s $(pwd)/protoflow/protoflow /usr/local/bin/protoflow
+
+# 2. Run from any git repo
+cd ~/your-project
+protoflow
+```
+
 ## Prerequisites
 
-### 1. Claude Code CLI
+You need [Claude Code](https://claude.ai/code) installed and authenticated:
 
-ProtoFlow requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code), Anthropic's AI coding assistant.
-
-**Install Claude Code:**
 ```bash
 npm install -g @anthropic-ai/claude-code
-```
-
-**Authenticate:**
-```bash
-claude
-# Follow the prompts to log in with your Anthropic account
-```
-
-You'll need an Anthropic account with API access. Visit [console.anthropic.com](https://console.anthropic.com) to sign up.
-
-### 2. tmux
-
-ProtoFlow uses tmux to run multiple Claude agents side-by-side.
-
-```bash
-# macOS
-brew install tmux
-
-# Ubuntu/Debian
-sudo apt install tmux
-
-# Fedora
-sudo dnf install tmux
-```
-
-### 3. Git
-
-Git is required for creating isolated worktrees for each approach.
-
-```bash
-# macOS
-brew install git
-
-# Ubuntu/Debian
-sudo apt install git
+claude  # Follow prompts to log in
 ```
 
 ## Installation
 
+### Option A: Global Install (Recommended)
+
+Run `protoflow` from anywhere:
+
 ```bash
-# Clone the repo
 git clone https://github.com/aaronbatchelder/protoflow.git
 cd protoflow
-
-# Make it executable
 chmod +x protoflow
+sudo ln -s $(pwd)/protoflow /usr/local/bin/protoflow
+```
 
-# Symlink to your PATH (optional, for global access)
-ln -s $(pwd)/protoflow /usr/local/bin/protoflow
+### Option B: Direct Download
+
+```bash
+curl -o protoflow https://raw.githubusercontent.com/aaronbatchelder/protoflow/main/protoflow
+chmod +x protoflow
+sudo mv protoflow /usr/local/bin/
+```
+
+### Option C: Run Locally
+
+Just clone and run directly:
+
+```bash
+git clone https://github.com/aaronbatchelder/protoflow.git
+./protoflow/protoflow
 ```
 
 ## Usage
 
-### Interactive Mode (Recommended)
+### In an Existing Project
 
-Just run:
+```bash
+cd ~/projects/myapp
+protoflow
+# Press Enter to use current directory, then follow prompts
+```
+
+### Start a New Project
 
 ```bash
 protoflow
+# Enter a project name like "my-app" (creates ~/projects/my-app)
+# Or enter a full path like ~/code/new-project
 ```
 
-You'll be guided through:
-1. **Project** - Enter a path or just a name (e.g., `my-app` creates `~/projects/my-app`)
-2. **Task** - Describe what you want to build
-3. **Approaches** - Define 2-4 different approaches to explore
-
-### CLI Mode
+### Non-Interactive Mode
 
 ```bash
 protoflow "Add user authentication" \
@@ -111,38 +105,18 @@ protoflow "Add user authentication" \
 
 1. **Creates isolated git worktrees** - Each approach gets its own branch and working directory
 2. **Assigns unique dev server ports** - Approach A gets port 3000, B gets 3001, etc. to avoid conflicts
-3. **Spawns Claude Code agents** - Opens tmux with side-by-side panes, each running Claude
+3. **Spawns Claude Code agents** - Opens a separate terminal window for each approach
 4. **Auto-injects the prompt** - Each agent starts working immediately with the task + its specific constraint
-5. **You watch and compare** - See both approaches develop in real-time
+5. **You watch and compare** - Switch between windows to see approaches develop in real-time
 
-```
-┌─────────────────────────────────┬─────────────────────────────────┐
-│ Approach A: Redux               │ Approach B: Zustand             │
-│                                 │                                 │
-│ Claude is implementing...       │ Claude is implementing...       │
-│ > Creating store/index.ts       │ > Creating store.ts             │
-│ > Adding userSlice.ts           │ > Simple 15 lines of code       │
-│ > Configuring middleware...     │ > Done!                         │
-│                                 │                                 │
-└─────────────────────────────────┴─────────────────────────────────┘
-```
+## Window Navigation
 
-## Keyboard Shortcuts
-
-While in the tmux session:
+Each approach runs in its own terminal window:
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+B` then `o` | Switch between panes |
-| `Ctrl+B` then `→` | Move to right pane |
-| `Ctrl+B` then `←` | Move to left pane |
-| `Ctrl+B` then `D` | Detach (keeps running in background) |
-| `Ctrl+B` then `z` | Zoom current pane (toggle fullscreen) |
-
-To reattach to a detached session:
-```bash
-tmux attach -t protoflow-<id>
-```
+| `Cmd+\`` (macOS) | Switch between terminal windows |
+| `Alt+Tab` (Linux) | Switch between terminal windows |
 
 ## Example Use Cases
 
@@ -206,12 +180,6 @@ Session data is stored in `~/.protoflow/sessions/`. Each session creates:
 
 ## Troubleshooting
 
-### "tmux is required but not installed"
-```bash
-brew install tmux  # macOS
-sudo apt install tmux  # Ubuntu/Debian
-```
-
 ### "Not a git repository"
 ProtoFlow needs a git repo to create worktrees. Run `git init` first or let ProtoFlow create one for you in interactive mode.
 
@@ -229,14 +197,11 @@ claude
 
 You need an Anthropic account with API access. Sign up at [console.anthropic.com](https://console.anthropic.com).
 
-### Claude shows "bypass permissions" warning
-This is expected. ProtoFlow runs Claude with `--dangerously-skip-permissions` so it can work autonomously. The script automatically accepts this warning.
-
 ### Both approaches trying to use the same port
 ProtoFlow automatically assigns different ports to each approach (A=3000, B=3001, C=3002, D=3003). This is included in the PROMPT.md for each approach.
 
-### Panes are too small
-Press `Ctrl+B` then `z` to zoom the current pane to fullscreen. Press again to unzoom.
+### Terminal windows not opening (Linux)
+ProtoFlow tries gnome-terminal, konsole, and xterm in order. If none are available, you'll need to manually run Claude in each worktree directory.
 
 ## License
 

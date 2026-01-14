@@ -20,10 +20,10 @@ NC='\033[0m' # No Color
 PROTOFLOW_DIR="$HOME/.protoflow"
 mkdir -p "$PROTOFLOW_DIR/sessions"
 
-# Check for tmux first
-if ! command -v tmux &> /dev/null; then
-  echo -e "${RED}Error: tmux is required but not installed${NC}"
-  echo "Install with: brew install tmux"
+# Check for required tools
+if ! command -v claude &> /dev/null; then
+  echo -e "${RED}Error: claude CLI is required but not installed${NC}"
+  echo "Install from: https://claude.ai/code"
   exit 1
 fi
 
@@ -97,16 +97,18 @@ EOF
   # Step 1: Project
   if [[ -z "$REPO" ]]; then
     echo -e "${CYAN}${BOLD}Step 1: Project${NC}"
-    echo -e "${DIM}Where should we build? Enter a path or project name.${NC}"
-    echo -e "${DIM}Examples: ${NC}${YELLOW}my-app${NC}${DIM}, ${NC}${YELLOW}~/projects/website${NC}${DIM}, ${NC}${YELLOW}/path/to/repo${NC}"
-    echo ""
 
     # Default to current directory if it's a git repo
     DEFAULT_REPO=""
     if [[ -d ".git" ]]; then
       DEFAULT_REPO="$(pwd)"
+      echo -e "${DIM}Current directory is a git repo. Press Enter to use it, or enter a different path.${NC}"
+      echo ""
       echo -e -n "${YELLOW}Project path${NC} [${DEFAULT_REPO}]: "
     else
+      echo -e "${DIM}Enter a path to an existing repo, or a name to create a new project.${NC}"
+      echo -e "${DIM}Examples: ${NC}${YELLOW}.${NC}${DIM} (current dir), ${NC}${YELLOW}~/projects/myapp${NC}${DIM}, ${NC}${YELLOW}new-project${NC}"
+      echo ""
       echo -e -n "${YELLOW}Project path${NC}: "
     fi
 
@@ -116,9 +118,16 @@ EOF
     # Expand ~ to home directory
     REPO="${REPO/#\~/$HOME}"
 
-    # If it's a simple name (no slashes), put it in ~/projects/
-    if [[ ! "$REPO" == *"/"* ]]; then
+    # Handle "." for current directory
+    if [[ "$REPO" == "." ]]; then
+      REPO="$(pwd)"
+    # Only prepend ~/projects/ for simple names when NOT in a git repo
+    elif [[ ! "$REPO" == *"/"* ]] && [[ -z "$DEFAULT_REPO" ]]; then
       REPO="$HOME/projects/$REPO"
+      echo -e "${DIM}Creating new project: $REPO${NC}"
+    # Simple name but we're in a git repo - treat as subdirectory
+    elif [[ ! "$REPO" == *"/"* ]] && [[ -n "$DEFAULT_REPO" ]]; then
+      REPO="$(pwd)/$REPO"
       echo -e "${DIM}Using: $REPO${NC}"
     fi
   fi
@@ -271,8 +280,8 @@ for i in "${!APPROACHES[@]}"; do
   git -C "$REPO" worktree add "$WORKTREE_PATH" -b "$BRANCH_NAME" 2>/dev/null || \
     git -C "$REPO" worktree add "$WORKTREE_PATH" "$BRANCH_NAME" 2>/dev/null
 
-  # Assign unique port for this approach (3000 + index)
-  DEV_PORT=$((3000 + i))
+  # Assign unique port for this approach (starting at 4000 to avoid common defaults)
+  DEV_PORT=$((4000 + i))
 
   # Create PROMPT.md
   cat > "$WORKTREE_PATH/PROMPT.md" << EOF
@@ -289,9 +298,13 @@ $CONSTRAINT
 Implement the task above following the specified approach.
 Work autonomously until the task is complete.
 
-## Dev Server Port
+## IMPORTANT: Dev Server Port
 
-If you need to run a dev server, use port $DEV_PORT to avoid conflicts with other approaches running in parallel.
+You MUST use port $DEV_PORT for any dev server. Other approaches are running in parallel on different ports.
+
+Configure your dev server to use port $DEV_PORT (e.g., `vite --port $DEV_PORT`, `next dev -p $DEV_PORT`, `PORT=$DEV_PORT npm start`).
+
+When the dev server is running, open http://localhost:$DEV_PORT in the browser.
 EOF
 
   WORKTREES+=("$WORKTREE_PATH")
@@ -302,65 +315,93 @@ echo ""
 echo -e "${DIM}Launching Claude agents...${NC}"
 echo ""
 
-# Create tmux session with split panes
-TMUX_SESSION="protoflow-$SESSION_ID"
+# Launch each approach in a separate Terminal window
 INITIAL_PROMPT="Read PROMPT.md and implement the task. Work autonomously until complete."
 
-# Start tmux session with first approach
-tmux new-session -d -s "$TMUX_SESSION" -c "${WORKTREES[0]}"
-tmux send-keys -t "$TMUX_SESSION:0.0" "claude --dangerously-skip-permissions" Enter
+# Detect the terminal emulator and OS
+launch_terminal() {
+  local worktree="$1"
+  local letter="$2"
+  local prompt="$3"
 
-# Add panes for remaining approaches
-for i in "${!WORKTREES[@]}"; do
-  if [[ $i -eq 0 ]]; then
-    continue
+  # Create a launcher script for this approach
+  local launcher="$worktree/.protoflow-launcher.sh"
+  cat > "$launcher" << LAUNCHER
+#!/bin/bash
+cd "$worktree"
+echo -e "\033[0;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+echo -e "\033[0;36m║  ProtoFlow - Approach $letter                                    ║\033[0m"
+echo -e "\033[0;36m║  Session: $SESSION_ID                              ║\033[0m"
+echo -e "\033[0;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
+echo ""
+echo -e "\033[2mWorking directory: $worktree\033[0m"
+echo ""
+claude --dangerously-skip-permissions "$prompt"
+LAUNCHER
+  chmod +x "$launcher"
+
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS - use Terminal.app or iTerm if available
+    if [[ -d "/Applications/iTerm.app" ]]; then
+      osascript << EOF
+tell application "iTerm"
+  create window with default profile
+  tell current session of current window
+    write text "cd \"$worktree\" && bash .protoflow-launcher.sh"
+  end tell
+end tell
+EOF
+    else
+      osascript << EOF
+tell application "Terminal"
+  do script "cd \"$worktree\" && bash .protoflow-launcher.sh"
+  activate
+end tell
+EOF
+    fi
+  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux - try common terminal emulators
+    if command -v gnome-terminal &> /dev/null; then
+      gnome-terminal --working-directory="$worktree" -- bash .protoflow-launcher.sh &
+    elif command -v konsole &> /dev/null; then
+      konsole --workdir "$worktree" -e bash .protoflow-launcher.sh &
+    elif command -v xterm &> /dev/null; then
+      xterm -e "cd '$worktree' && bash .protoflow-launcher.sh" &
+    else
+      echo -e "${RED}No supported terminal emulator found${NC}"
+      echo "Please manually run: cd '$worktree' && claude '$prompt'"
+    fi
+  else
+    echo -e "${YELLOW}Unsupported OS. Please manually run in each directory:${NC}"
+    echo "cd '$worktree' && claude '$prompt'"
   fi
+}
 
-  # Split horizontally for even layout
-  tmux split-window -t "$TMUX_SESSION" -h -c "${WORKTREES[$i]}"
-  tmux send-keys -t "$TMUX_SESSION:0.$i" "claude --dangerously-skip-permissions" Enter
-done
-
-# Even out the pane layout
-tmux select-layout -t "$TMUX_SESSION" even-horizontal
-
-# Add status bar
-tmux set -t "$TMUX_SESSION" status-style "bg=#6366f1,fg=white"
-tmux set -t "$TMUX_SESSION" status-left "[ProtoFlow: $SESSION_ID] "
-tmux set -t "$TMUX_SESSION" status-right "Ctrl+B then D to detach"
-
-# Wait for the bypass permissions warning to appear
-sleep 2
-
-# Accept the bypass warning in each pane (press 2 for "Yes, I accept")
-for i in "${!WORKTREES[@]}"; do
-  tmux send-keys -t "$TMUX_SESSION:0.$i" "2" Enter
-done
-
-echo -e "${DIM}Waiting for agents to initialize...${NC}"
-
-# Wait for Claude to fully start after accepting (needs enough time to load)
-sleep 8
-
-# Send the prompt to each pane with enough delay between them
+# Launch terminal for each approach
 for i in "${!WORKTREES[@]}"; do
   LETTER="${LETTERS[$i]}"
-  echo -e "${GREEN}▶${NC} Starting Approach $LETTER"
-  tmux send-keys -t "$TMUX_SESSION:0.$i" "$INITIAL_PROMPT"
-  sleep 0.5
-  tmux send-keys -t "$TMUX_SESSION:0.$i" Enter
-  sleep 3
+  echo -e "${GREEN}▶${NC} Launching Approach $LETTER in new terminal window..."
+  launch_terminal "${WORKTREES[$i]}" "$LETTER" "$INITIAL_PROMPT"
+  sleep 1  # Small delay between launches
 done
 
 echo ""
-echo -e "${GREEN}${BOLD}All agents running!${NC}"
+echo -e "${GREEN}${BOLD}All agents launched!${NC}"
 echo ""
-echo -e "  ${DIM}Ctrl+B then o${NC}     Switch between panes"
-echo -e "  ${DIM}Ctrl+B then D${NC}     Detach (agents keep running)"
-echo -e "  ${DIM}Ctrl+B then z${NC}     Zoom current pane"
+echo -e "  ${DIM}Each approach is running in its own terminal window.${NC}"
+echo -e "  ${DIM}Switch between windows using Cmd+\` (macOS) or Alt+Tab (Linux).${NC}"
 echo ""
-echo -e "  ${DIM}Reattach later:${NC}   tmux attach -t $TMUX_SESSION"
+echo -e "${CYAN}${BOLD}Session Info:${NC}"
+echo -e "  ${DIM}Session ID:${NC}  $SESSION_ID"
+echo -e "  ${DIM}Workspaces:${NC}  $SESSION_DIR"
 echo ""
-
-# Attach to session
-tmux attach -t "$TMUX_SESSION"
+echo -e "${CYAN}${BOLD}Branches created:${NC}"
+for i in "${!APPROACHES[@]}"; do
+  LETTER="${LETTERS[$i]}"
+  LETTER_LOWER=$(echo "$LETTER" | tr '[:upper:]' '[:lower:]')
+  echo -e "  ${CYAN}$LETTER${NC}: protoflow/$SESSION_ID/approach-$LETTER_LOWER"
+done
+echo ""
+echo -e "${DIM}When finished, merge your preferred approach:${NC}"
+echo -e "  git merge protoflow/$SESSION_ID/approach-a  ${DIM}# or b, c, d${NC}"
+echo ""
