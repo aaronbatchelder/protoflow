@@ -96,39 +96,72 @@ EOF
 
   # Step 1: Project
   if [[ -z "$REPO" ]]; then
-    echo -e "${CYAN}${BOLD}Step 1: Project${NC}"
+    echo -e "${CYAN}${BOLD}Select your project to get started${NC}"
+    echo ""
 
-    # Default to current directory if it's a git repo
-    DEFAULT_REPO=""
-    if [[ -d ".git" ]]; then
-      DEFAULT_REPO="$(pwd)"
-      echo -e "${DIM}Current directory is a git repo. Press Enter to use it, or enter a different path.${NC}"
+    # Check if we're in a git repo
+    if git rev-parse --git-dir &>/dev/null; then
+      CURRENT_DIR="$(pwd)"
+      REPO_NAME=$(basename "$CURRENT_DIR")
+
+      echo -e "  ${GREEN}→${NC} You're in: ${CYAN}$CURRENT_DIR${NC}"
       echo ""
-      echo -e -n "${YELLOW}Project path${NC} [${DEFAULT_REPO}]: "
+      echo -e "  ${YELLOW}1${NC}) Use current repo: ${BOLD}$REPO_NAME${NC} ${DIM}(default)${NC}"
+      echo -e "  ${YELLOW}2${NC}) Enter a different path"
+      echo -e "  ${YELLOW}3${NC}) Create a new project"
+      echo ""
+      echo -e -n "Enter choice (1-3): "
+      read -r CHOICE
+      CHOICE="${CHOICE:-1}"
+
+      case "$CHOICE" in
+        1)
+          REPO="$CURRENT_DIR"
+          ;;
+        2)
+          echo -e -n "${YELLOW}Project path${NC}: "
+          read -r REPO
+          REPO="${REPO/#\~/$HOME}"
+          ;;
+        3)
+          echo -e -n "${YELLOW}New project name${NC}: "
+          read -r PROJECT_NAME
+          REPO="$HOME/projects/$PROJECT_NAME"
+          echo -e "${DIM}Will create: $REPO${NC}"
+          ;;
+        *)
+          REPO="$CURRENT_DIR"
+          ;;
+      esac
     else
-      echo -e "${DIM}Enter a path to an existing repo, or a name to create a new project.${NC}"
-      echo -e "${DIM}Examples: ${NC}${YELLOW}.${NC}${DIM} (current dir), ${NC}${YELLOW}~/projects/myapp${NC}${DIM}, ${NC}${YELLOW}new-project${NC}"
+      # Not in a git repo
+      echo -e "  ${DIM}You're in: $(pwd) (not a git repo)${NC}"
       echo ""
-      echo -e -n "${YELLOW}Project path${NC}: "
-    fi
+      echo -e "  ${YELLOW}1${NC}) Enter path to existing repo ${DIM}(default)${NC}"
+      echo -e "  ${YELLOW}2${NC}) Create a new project"
+      echo ""
+      echo -e -n "Enter choice (1-2): "
+      read -r CHOICE
+      CHOICE="${CHOICE:-1}"
 
-    read -r REPO_INPUT
-    REPO="${REPO_INPUT:-$DEFAULT_REPO}"
-
-    # Expand ~ to home directory
-    REPO="${REPO/#\~/$HOME}"
-
-    # Handle "." for current directory
-    if [[ "$REPO" == "." ]]; then
-      REPO="$(pwd)"
-    # Only prepend ~/projects/ for simple names when NOT in a git repo
-    elif [[ ! "$REPO" == *"/"* ]] && [[ -z "$DEFAULT_REPO" ]]; then
-      REPO="$HOME/projects/$REPO"
-      echo -e "${DIM}Creating new project: $REPO${NC}"
-    # Simple name but we're in a git repo - treat as subdirectory
-    elif [[ ! "$REPO" == *"/"* ]] && [[ -n "$DEFAULT_REPO" ]]; then
-      REPO="$(pwd)/$REPO"
-      echo -e "${DIM}Using: $REPO${NC}"
+      case "$CHOICE" in
+        1)
+          echo -e -n "${YELLOW}Project path${NC}: "
+          read -r REPO
+          REPO="${REPO/#\~/$HOME}"
+          ;;
+        2)
+          echo -e -n "${YELLOW}New project name${NC}: "
+          read -r PROJECT_NAME
+          REPO="$HOME/projects/$PROJECT_NAME"
+          echo -e "${DIM}Will create: $REPO${NC}"
+          ;;
+        *)
+          echo -e -n "${YELLOW}Project path${NC}: "
+          read -r REPO
+          REPO="${REPO/#\~/$HOME}"
+          ;;
+      esac
     fi
   fi
 
@@ -267,6 +300,17 @@ echo ""
 WORKTREES=()
 LETTERS=("A" "B" "C" "D")
 
+# Check if this is an existing repo with code or a new/empty repo
+FILE_COUNT=$(find "$REPO" -maxdepth 2 -type f \( -name "*.js" -o -name "*.ts" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.rb" -o -name "*.php" -o -name "*.swift" -o -name "*.kt" -o -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.cs" -o -name "*.vue" -o -name "*.svelte" -o -name "*.tsx" -o -name "*.jsx" -o -name "package.json" -o -name "Cargo.toml" -o -name "go.mod" -o -name "requirements.txt" -o -name "Gemfile" -o -name "pom.xml" \) 2>/dev/null | wc -l | tr -d ' ')
+
+if [[ "$FILE_COUNT" -gt 0 ]]; then
+  IS_EXISTING_REPO=true
+  echo -e "${DIM}Detected existing codebase ($FILE_COUNT source files)${NC}"
+else
+  IS_EXISTING_REPO=false
+  echo -e "${DIM}Starting with empty/new repository${NC}"
+fi
+
 for i in "${!APPROACHES[@]}"; do
   LETTER="${LETTERS[$i]}"
   LETTER_LOWER=$(echo "$LETTER" | tr '[:upper:]' '[:lower:]')
@@ -283,8 +327,9 @@ for i in "${!APPROACHES[@]}"; do
   # Assign unique port for this approach (starting at 4000 to avoid common defaults)
   DEV_PORT=$((4000 + i))
 
-  # Create PROMPT.md
-  cat > "$WORKTREE_PATH/PROMPT.md" << EOF
+  # Create PROMPT.md with different instructions based on repo state
+  if [[ "$IS_EXISTING_REPO" == true ]]; then
+    cat > "$WORKTREE_PATH/PROMPT.md" << EOF
 # Task
 
 $PROMPT
@@ -295,17 +340,47 @@ $CONSTRAINT
 
 ## Instructions
 
-Implement the task above following the specified approach.
+This is an existing codebase. Before making any changes:
+
+1. **Explore the codebase** - Understand the project structure, tech stack, and existing patterns
+2. **Review relevant files** - Read the code that relates to your task
+3. **Plan your approach** - Decide how to implement the task while following existing conventions
+4. **Implement** - Make changes that integrate cleanly with the existing code
+
 Work autonomously until the task is complete.
 
 ## IMPORTANT: Dev Server Port
 
 You MUST use port $DEV_PORT for any dev server. Other approaches are running in parallel on different ports.
 
-Configure your dev server to use port $DEV_PORT (e.g., `vite --port $DEV_PORT`, `next dev -p $DEV_PORT`, `PORT=$DEV_PORT npm start`).
+Configure your dev server to use port $DEV_PORT (e.g., \`vite --port $DEV_PORT\`, \`next dev -p $DEV_PORT\`, \`PORT=$DEV_PORT npm start\`).
 
-When the dev server is running, open http://localhost:$DEV_PORT in the browser.
+If this project has a web UI, run \`open http://localhost:$DEV_PORT\` to launch the browser after starting the dev server.
 EOF
+  else
+    cat > "$WORKTREE_PATH/PROMPT.md" << EOF
+# Task
+
+$PROMPT
+
+## Approach
+
+$CONSTRAINT
+
+## Instructions
+
+This is a new project. Build it from scratch following the specified approach.
+Work autonomously until the task is complete.
+
+## IMPORTANT: Dev Server Port
+
+You MUST use port $DEV_PORT for any dev server. Other approaches are running in parallel on different ports.
+
+Configure your dev server to use port $DEV_PORT (e.g., \`vite --port $DEV_PORT\`, \`next dev -p $DEV_PORT\`, \`PORT=$DEV_PORT npm start\`).
+
+If this project has a web UI, run \`open http://localhost:$DEV_PORT\` to launch the browser after starting the dev server.
+EOF
+  fi
 
   WORKTREES+=("$WORKTREE_PATH")
   echo -e "${GREEN}  ✓${NC} Approach $LETTER ready"
@@ -323,18 +398,28 @@ launch_terminal() {
   local worktree="$1"
   local letter="$2"
   local prompt="$3"
+  local port="$4"
 
   # Create a launcher script for this approach
   local launcher="$worktree/.protoflow-launcher.sh"
   cat > "$launcher" << LAUNCHER
 #!/bin/bash
 cd "$worktree"
+
+# Kill any existing process on this port
+if lsof -ti:$port &>/dev/null; then
+  echo -e "\033[0;33mKilling existing process on port $port...\033[0m"
+  lsof -ti:$port | xargs kill -9 2>/dev/null
+  sleep 1
+fi
+
 echo -e "\033[0;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
 echo -e "\033[0;36m║  ProtoFlow - Approach $letter                                    ║\033[0m"
 echo -e "\033[0;36m║  Session: $SESSION_ID                              ║\033[0m"
 echo -e "\033[0;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
 echo ""
 echo -e "\033[2mWorking directory: $worktree\033[0m"
+echo -e "\033[2mAssigned port: $port\033[0m"
 echo ""
 claude --dangerously-skip-permissions "$prompt"
 LAUNCHER
@@ -380,8 +465,9 @@ EOF
 # Launch terminal for each approach
 for i in "${!WORKTREES[@]}"; do
   LETTER="${LETTERS[$i]}"
+  PORT=$((4000 + i))
   echo -e "${GREEN}▶${NC} Launching Approach $LETTER in new terminal window..."
-  launch_terminal "${WORKTREES[$i]}" "$LETTER" "$INITIAL_PROMPT"
+  launch_terminal "${WORKTREES[$i]}" "$LETTER" "$INITIAL_PROMPT" "$PORT"
   sleep 1  # Small delay between launches
 done
 

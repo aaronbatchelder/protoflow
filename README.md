@@ -15,55 +15,24 @@ When building a feature, there's often multiple valid approaches:
 
 Instead of wasting time deciding, **prototype them all**. Let multiple concurrent agents build each approach simultaneously, then compare real working code and experiences.
 
-## Quick Start
+## Install
 
 ```bash
-# 1. Install (one-time)
-git clone https://github.com/aaronbatchelder/protoflow.git
-sudo ln -s $(pwd)/protoflow/protoflow /usr/local/bin/protoflow
-
-# 2. Run from any git repo
-cd ~/your-project
-protoflow
+curl -fsSL https://raw.githubusercontent.com/aaronbatchelder/protoflow/main/install.sh | bash
 ```
 
-## Prerequisites
-
-You need [Claude Code](https://claude.ai/code) installed and authenticated:
+Requires [Claude Code](https://claude.ai/code):
 
 ```bash
 npm install -g @anthropic-ai/claude-code
 claude  # Follow prompts to log in
 ```
 
-## Installation
-
-### Option A: Global Install (Recommended)
-
-Run `protoflow` from anywhere:
+## Quick Start
 
 ```bash
-git clone https://github.com/aaronbatchelder/protoflow.git
-cd protoflow
-chmod +x protoflow
-sudo ln -s $(pwd)/protoflow /usr/local/bin/protoflow
-```
-
-### Option B: Direct Download
-
-```bash
-curl -o protoflow https://raw.githubusercontent.com/aaronbatchelder/protoflow/main/protoflow
-chmod +x protoflow
-sudo mv protoflow /usr/local/bin/
-```
-
-### Option C: Run Locally
-
-Just clone and run directly:
-
-```bash
-git clone https://github.com/aaronbatchelder/protoflow.git
-./protoflow/protoflow
+cd ~/your-project
+protoflow
 ```
 
 ## Usage
@@ -104,7 +73,7 @@ protoflow "Add user authentication" \
 ## How It Works
 
 1. **Creates isolated git worktrees** - Each approach gets its own branch and working directory
-2. **Assigns unique dev server ports** - Approach A gets port 3000, B gets 3001, etc. to avoid conflicts
+2. **Assigns unique dev server ports** - Approach A gets port 4000, B gets 4001, etc. to avoid conflicts
 3. **Spawns Claude Code agents** - Opens a separate terminal window for each approach
 4. **Auto-injects the prompt** - Each agent starts working immediately with the task + its specific constraint
 5. **You watch and compare** - Switch between windows to see approaches develop in real-time
@@ -198,7 +167,7 @@ claude
 You need an Anthropic account with API access. Sign up at [console.anthropic.com](https://console.anthropic.com).
 
 ### Both approaches trying to use the same port
-ProtoFlow automatically assigns different ports to each approach (A=3000, B=3001, C=3002, D=3003). This is included in the PROMPT.md for each approach.
+ProtoFlow automatically assigns different ports to each approach (A=4000, B=4001, C=4002, D=4003). This is included in the PROMPT.md for each approach.
 
 ### Terminal windows not opening (Linux)
 ProtoFlow tries gnome-terminal, konsole, and xterm in order. If none are available, you'll need to manually run Claude in each worktree directory.
