@@ -108,10 +108,10 @@ protoflow "Create a blog API with posts, comments, and users" \
 
 ### Styling Strategies
 ```bash
-protoflow "Build a responsive dashboard layout" \
-  --repo ~/projects/dashboard \
-  --approach "Use Tailwind CSS" \
-  --approach "Use styled-components"
+protoflow "Build a new portfolio site for my artwork." \
+  --repo ~/projects/my-site \
+  --approach "90s geocities style" \
+  --approach "Minmalist, modern"
 ```
 
 ### Database Decisions
@@ -183,4 +183,4 @@ PRs welcome! Some ideas:
 - [ ] Support for more than 4 approaches
 - [ ] Web UI for monitoring progress
 - [ ] Auto-detect when approaches are complete
-- [ ] Cost tracking per approach
+- [ ] Token/cost tracking per approach
