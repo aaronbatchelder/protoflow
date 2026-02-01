@@ -4,7 +4,7 @@
 
 > Stop debating. Start building. Spawn AI agents with different constraints and compare real working code.
 
-[View Site](https://aaronbatchelder.github.io/protoflow) · [Install](#install) · [Quick Start](#quick-start)
+[View Site](https://protoflow.it) · [Install](#install) · [Quick Start](#quick-start)
 
 ![ProtoFlow Demo](https://github.com/aaronbatchelder/ProtoFlow/blob/main/protoflow.gif)
 
