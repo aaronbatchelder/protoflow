@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProtoFlow - Prototype multiple approaches in parallel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #fafafa;
+      --text: #1a1a1a;
+      --muted: #666;
+      --border: #e0e0e0;
+      --accent: #0066ff;
+      --code-bg: #f0f0f0;
+    }
+
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header */
+    header {
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+
+    .logo span {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 32px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 500px;
+      margin: 0 auto 40px;
+    }
+
+    /* Install box */
+    .install-box {
+      background: var(--text);
+      color: var(--bg);
+      padding: 20px 24px;
+      border-radius: 8px;
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .install-box code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      word-break: break-all;
+    }
+
+    .install-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+
+    /* Demo */
+    .demo {
+      padding: 60px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo img {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* Sections */
+    section {
+      padding: 60px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section:last-of-type {
+      border-bottom: none;
+    }
+
+    h2 {
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    /* How it works */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .step-content h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Code blocks */
+    pre {
+      background: var(--code-bg);
+      padding: 16px 20px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 13px;
+      margin: 16px 0;
+    }
+
+    code {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* Use cases */
+    .use-cases {
+      display: grid;
+      gap: 32px;
+    }
+
+    .use-case h3 {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .use-case p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .use-case pre {
+      margin: 0;
+    }
+
+    /* Prerequisites */
+    .prereq-list {
+      list-style: none;
+    }
+
+    .prereq-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .prereq-list li:last-child {
+      border-bottom: none;
+    }
+
+    .prereq-list .check {
+      color: #22c55e;
+    }
+
+    .prereq-list a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .prereq-list a:hover {
+      text-decoration: underline;
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Links */
+    .links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .links a:hover {
+      color: var(--text);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero h1 {
+        font-size: 24px;
+      }
+
+      .hero {
+        padding: 60px 0 40px;
+      }
+
+      section {
+        padding: 40px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">protoflow <span>cli</span></div>
+    </header>
+
+    <section class="hero">
+      <h1>prototype multiple approaches in parallel</h1>
+      <p>Stop debating. Start building. Spawn AI agents with different constraints and compare real working code.</p>
+
+      <div class="install-label">Install</div>
+      <div class="install-box">
+        <code>curl -fsSL https://raw.githubusercontent.com/aaronbatchelder/protoflow/main/install.sh | bash</code>
+      </div>
+    </section>
+
+    <section class="demo">
+      <h2>Demo</h2>
+      <img src="protoflow.gif" alt="ProtoFlow demo showing parallel prototyping">
+    </section>
+
+    <section>
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Define your task</h3>
+            <p>Describe what you want to build in plain language</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Add approach constraints</h3>
+            <p>Specify 2-4 different strategies or technologies to try</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Watch agents build</h3>
+            <p>Each approach runs in its own terminal with isolated git branches</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h3>Merge the winner</h3>
+            <p>Compare real code, then merge your preferred approach</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Quick start</h2>
+      <pre><code>cd ~/your-project
+protoflow</code></pre>
+      <p style="color: var(--muted); font-size: 14px; margin-top: 12px;">Interactive prompts will guide you through task and approach setup.</p>
+    </section>
+
+    <section>
+      <h2>Example: Non-interactive mode</h2>
+      <pre><code>protoflow "Add user authentication" \
+  --repo ~/projects/myapp \
+  --approach "Use Passport.js with sessions" \
+  --approach "Use JWT tokens"</code></pre>
+    </section>
+
+    <section>
+      <h2>Use cases</h2>
+      <div class="use-cases">
+        <div class="use-case">
+          <h3>Onboarding flows</h3>
+          <p>Compare UX patterns side-by-side</p>
+          <pre><code>protoflow "Build user onboarding flow" \
+  --approach "Multi-step wizard with progress bar" \
+  --approach "Single-page form with sections" \
+  --approach "Conversational chat-style onboarding"</code></pre>
+        </div>
+        <div class="use-case">
+          <h3>Dashboard layouts</h3>
+          <p>Test information hierarchy options</p>
+          <pre><code>protoflow "Create analytics dashboard" \
+  --approach "Card-based grid layout" \
+  --approach "Data-dense table view" \
+  --approach "Interactive charts focus"</code></pre>
+        </div>
+        <div class="use-case">
+          <h3>Navigation patterns</h3>
+          <p>Validate mobile-first designs</p>
+          <pre><code>protoflow "Implement main navigation" \
+  --approach "Bottom tab bar (mobile-first)" \
+  --approach "Hamburger menu with slide-out" \
+  --approach "Persistent sidebar"</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Prerequisites</h2>
+      <ul class="prereq-list">
+        <li>
+          <span class="check">+</span>
+          <div>
+            <strong>Git</strong> — required for worktree isolation
+          </div>
+        </li>
+        <li>
+          <span class="check">+</span>
+          <div>
+            <strong>Claude Code CLI</strong><br>
+            <code style="font-size: 13px;">npm install -g @anthropic-ai/claude-code</code>
+          </div>
+        </li>
+        <li>
+          <span class="check">+</span>
+          <div>
+            <strong>Anthropic account</strong> — <a href="https://console.anthropic.com">console.anthropic.com</a>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>MIT License</p>
+      <div class="links">
+        <a href="https://github.com/aaronbatchelder/protoflow">GitHub</a>
+        <a href="https://github.com/aaronbatchelder/protoflow#readme">Docs</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

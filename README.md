@@ -1,19 +1,16 @@
 # ProtoFlow
 
-Prototype multiple approaches in parallel. Merge the best one.
+**Prototype multiple approaches in parallel. Merge the best one.**
 
-ProtoFlow lets you define a task once, then spawn multiple [Claude Code](https://claude.ai/code) agents - each with different constraints or approaches defined by you. Watch them build side-by-side and pick the winner.
+> Stop debating. Start building. Spawn AI agents with different constraints and compare real working code.
+
+[View Site](https://aaronbatchelder.github.io/protoflow) · [Install](#install) · [Quick Start](#quick-start)
 
 ![ProtoFlow Demo](https://github.com/aaronbatchelder/ProtoFlow/blob/main/protoflow.gif)
 
 ## Why?
 
-When building a feature, there's often multiple valid approaches:
-- Redux vs Context vs Zustand for state management
-- REST vs GraphQL for an API
-- Tailwind vs CSS-in-JS for styling
-
-Instead of wasting time deciding, **prototype them all**. Let multiple concurrent agents build each approach simultaneously, then compare real working code and experiences.
+When building a feature, there's often multiple valid approaches—and choosing upfront wastes time. ProtoFlow lets you define a task once, then spawn multiple [Claude Code](https://claude.ai/code) agents, each with different constraints. Watch them build side-by-side and pick the winner.
 
 ## Install
 
